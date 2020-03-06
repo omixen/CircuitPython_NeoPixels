@@ -1,6 +1,10 @@
 # created for use in micro:bit
 # and the 12 neopixels ring
+# use the micro:bit radio color to control the color of the spinning tail
+
 import neopixel
+import radio
+from microbit import *
 
 # which pin and number of pixels
 pixels = neopixel.NeoPixel(pin2, 12)
@@ -29,25 +33,26 @@ def spin_tail(arr, i):
     pixels.show()
 
 # generate and seed with each color
-reds = gen_tail([255, 0, 0], 8)
-greens = gen_tail([0, 255, 0], 8)
-blues = gen_tail([0, 0, 255], 8)
+map = {'R': 0, 'G': 0, 'B': 0}
+num = 8
+tail = gen_tail([map['R'], map['G'], map['B']], num)
 
 # current state
-current = blues
 head = 0
+radio.on()
 
 while True:
-    spin_tail(current, head)
-    sleep(100)
+    message = radio.receive()
+    if message is not None and len(message) > 1 and (message[0] == 'R' or message[0] == 'G' or message[0] == 'B'):
+        map[message[0]] = int(message[1:])
+        tail = gen_tail([map['R'], map['G'], map['B']], num)
 
-    if button_a.is_pressed():
-        current = greens
-    elif button_b.is_pressed():
-        current = reds
-    else:
-        current = blues
+    spin_tail(tail, head)
+    sleep(100)
 
     head += 1
     if head > 11:
         head = 0
+
+
+
